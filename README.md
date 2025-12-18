@@ -4,10 +4,10 @@
   <img src="blockchains/memecore/info/logo.png" width="120" alt="MeCo Logo" />
   <br />
   
-  ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/MemeCore-Org/meco-assets/validate.yml?branch=main&style=flat-square&label=Asset%20Validator)
-  ![GitHub license](https://img.shields.io/github/license/MemeCore-Org/meco-assets?style=flat-square)
+  ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/MeCoWallet/meco-assets/validate.yml?branch=main&style=flat-square&label=Asset%20Validator)
+  ![GitHub license](https://img.shields.io/github/license/MeCoWallet/meco-assets?style=flat-square)
   ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-green.svg?style=flat-square)
-  
+
   <p>
     <b>The official asset repository providing token information for the MemeCore Network.</b>
   </p>
