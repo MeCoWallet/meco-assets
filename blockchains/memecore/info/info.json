@@ -1,0 +1,25 @@
+{
+    "name": "MemeCore",
+    "website": "http://memecore.com",
+    "description": "MemeCore is a Meme Chain (L1) that connects creators and communities through Memes and DApps. LIFT up the Fun! $M.",
+    "explorer": "https://memecorescan.io",
+    "research": "https://research.binance.com/en/projects/algorand",
+    "symbol": "M",
+    "type": "coin",
+    "decimals": 18,
+    "status": "active",
+    "links": [
+        {
+            "name": "x",
+            "url": "https://x.com/MemeCore_ORG"
+        },
+        {
+            "name": "discord",
+            "url": "https://discord.com/invite/memecore"
+        },
+        {
+            "name": "telegram",
+            "url": "https://t.me/MemeCoreLabs"
+        }
+    ]
+}

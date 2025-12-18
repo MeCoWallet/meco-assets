@@ -1,0 +1,25 @@
+name: Prettier Code Formatter
+
+on:
+  pull_request:
+    paths:
+      - '**/*.json'
+      - '**/*.md'
+
+jobs:
+  prettier:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # authorization for bot
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Prettify code
+        uses: creyD/prettier_action@v4.3
+        with:
+          # only for JSON & Markdown
+          prettier_options: --write **/*.{json,md}
+          commit_message: "style: auto-format json and markdown"
