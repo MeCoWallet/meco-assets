@@ -1,0 +1,19 @@
+# OS Junk
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.env
+
+# Node.js (Changesets용)
+node_modules/
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# Editor
+.vscode/
+.idea/
