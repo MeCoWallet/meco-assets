@@ -1,7 +1,7 @@
 # MeCo Assets Repository
 
 <div align="center">
-  <img src="blockchains/memecore/info/logo.png" width="120" alt="MeCo Logo" />
+  <img src="meco_logo.png" width="240" alt="MeCo Logo" />
   <br />
   
   ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/MeCoWallet/meco-assets/validate.yml?branch=main&style=flat-square&label=Asset%20Validator)
