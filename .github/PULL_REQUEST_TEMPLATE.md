@@ -1,44 +1,20 @@
-<!--
-Thank you for contributing to MeCo Assets! 
-Please read CONTRIBUTING.md before submitting.
--->
+## Asset Submission
 
-## 🔍 Token Registration Checklist
-_Please mark the boxes with an [x] once you have verified them._
+Please complete all fields below.
 
-### 📂 Folder & Naming
-- [ ] My folder name is the **Checksummed Address** (e.g., `0xAbCd...`, NOT `0xabcd...`).
-- [ ] I have verified the checksum using Etherscan or `ethers.utils.getAddress()`.
-- [ ] My folder is located in `blockchains/memecore/assets/`.
+- Project name:
+- Chain reference (example: `eip155-1`, `solana-mainnet`):
+- Token ID (for token icons only):
+- Official website:
+- Logo source URL:
+- I confirm this is the official logo: [ ] Yes
 
-### 🖼️ Logo Image
-- [ ] Filename is exactly `logo.png` (lowercase).
-- [ ] Format is **PNG**.
-- [ ] Dimensions are max **512x512px** and **1:1 (Square)** ratio.
-- [ ] File size is under **100KB** (Recommended).
+## Checklist
 
-### ℹ️ Token Info
-- [ ] Filename is exactly `info.json` (lowercase).
-- [ ] The `id` field in JSON matches the folder name exactly.
-- [ ] All required fields (`name`, `symbol`, `type`, `decimals`, `description`, `website`) are filled.
-- [ ] I have not impersonated major tokens (e.g., fake USDT).
-
----
-
-## 🔗 Project Details
-_Provide links to verify the project's legitimacy._
-
-- **Explorer Link:** (e.g., https://memecorescan.io/address/...)
-- **Website:** 
-- **Twitter/X:** 
-
-## ℹ️ Additional Context
-_Is there anything else we should know? (e.g., rebranding, token migration)_
-
----
-
-## 🛡️ Agreement & Disclaimer
-By submitting this Pull Request, I confirm that:
-1. I have the right to submit these assets.
-2. This token is not a scam, honeypot, or rug pull.
-3. I understand that the MeCo Team reserves the right to remove assets that violate the policy.
+- [ ] I followed the `assets/` folder rules in `README.md`
+- [ ] I used one of these paths: `assets/networks/{chainRef}.png`, `assets/tokens/native/{chainRef}.png`, or `assets/tokens/{chainRef}/{tokenId}.png`
+- [ ] My file is PNG and exactly 256x256
+- [ ] My image has transparent background
+- [ ] My file size is under 200KB
+- [ ] Token ID format matches the chain namespace rules in README
+- [ ] I understand only approved PRs merged to `main` become official CDN assets

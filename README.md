@@ -1,91 +1,99 @@
-# MeCo Assets Repository
+# MeCo Wallet Asset CDN Repository
 
 <div align="center">
-  <img src="meco_logo.png" width="240" alt="MeCo Logo" />
-  <br />
-  
-  ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/MeCoWallet/meco-assets/validate.yml?branch=main&style=flat-square&label=Asset%20Validator)
-  ![GitHub license](https://img.shields.io/github/license/MeCoWallet/meco-assets?style=flat-square)
-  ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-green.svg?style=flat-square)
-
-  <p>
-    <b>The official asset repository providing token information for the MemeCore Network.</b>
-  </p>
+  <img src="docs/assets/branding/meco-logo.png" width="220" alt="MeCo Wallet Logo" />
 </div>
 
----
+This repository is for asset listing requests from token projects.
+If your PR is approved and merged to `main`, your icon is served by jsDelivr and appears in MeCo Wallet.
 
-## 📖 Introduction
+## Prerequisites
 
-**MeCo Assets Repository** serves as the **single source of truth** for tokens building on the **MemeCore Network**. It is designed to be:
-- **Open:** Anyone can submit a token.
-- **Automated:** Validated by CI/CD bots for quality control.
-- **Multi-chain Ready:** Structured to support multiple blockchains in the future.
+- Install Python 3 (official): https://www.python.org/downloads/
+- Ensure `pip` is available (official guide): https://pip.pypa.io/en/stable/installation/
+- Install Python dependencies:
+  ```bash
+  pip3 install -r requirements.txt
+  ```
+- Prepare logo source image file (square image recommended, PNG preferred)
+- Logo does not need to be pre-cropped, but it must fit safely inside the circular display area in wallet UI.
+- Logo preparation sample:
+  <img src="docs/assets/logo-prep/sample.png" width="48" alt="Logo display sample" />
+- Prepare required metadata before running wizard:
+  - Asset type: `network` | `native` | `token`
+  - `chainRef` (example: `eip155-4352`, `solana-mainnet`)
+  - `tokenId` for token assets only
 
-If you are a developer building on MemeCore, please submit your asset here to have it appear in MeCo-compatible wallets, explorers, and dApps.
+## Who Does What
 
----
+- Requester: token project submits a PR
+- Approver: MeCo Wallet team reviews, approves, and merges
 
-## 📂 Directory Structure
+## What Requesters Must Do
 
-We follow the industry-standard multi-chain structure.
+1. Fork this repository.
+2. Prepare your icon file(s) using one of the following methods:
+   - Recommended: run the wizard command below and follow the prompts.
+     ```bash
+     python3 tools/asset_wizard.py
+     ```
+   - Need options reference: `python3 tools/asset_wizard.py --help`
+   - Manual: place files directly under `assets/` using the `Path Rules` below.
+3. Open a Pull Request.
 
-```text
-blockchains/
-└── memecore/            # Network: MemeCore
-    ├── info/
-    │   └── logo.png     # Chain Logo
-    └── assets/
-        └── 0xAbCd.../   # Token Contract Address (Checksummed)
-            ├── logo.png     # Token Logo
-            └── info.json    # Token Metadata
-```
+## Path Rules
 
----
+- Network icon: `assets/networks/{chainRef}.png`
+- Native token icon (mainnet projects only): `assets/tokens/native/{chainRef}.png`
+- Token icon (non-native project tokens): `assets/tokens/{chainRef}/{tokenId}.png`
+- Fallback icon: `assets/fallback/default-token.png`
 
-## 🚀 How to Add Your Token
+`chainRef` format: lowercase slug with namespace prefix (for example `eip155-4352`, `solana-mainnet`, `sui-mainnet`).
 
-We love memes, but we also love clean data. Adding your token to MeCo is free and easy.
+Token ID rules:
 
-1.  **Fork** this repository.
-2.  Create a folder with your **Checksummed Contract Address** in `blockchains/memecore/assets/`.
-3.  Add your `logo.png` and `info.json`.
-4.  Submit a **Pull Request**.
+- `eip155-*`: lowercase EVM address (`^0x[a-f0-9]{40}$`)
+- `solana-*`: base58 mint address
+- `aptos-*` and `sui-*`: lowercase hex with `0x` prefix
+- `tron-*`: base58 account format
+- Other namespaces: alphanumeric token ID with `._:-` allowed
 
-> 👉 **Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for strict technical requirements (image size, naming conventions, etc.).**
+Examples:
 
----
+- MemeCore network: `assets/networks/eip155-4352.png`
+- Solana native token: `assets/tokens/native/solana-mainnet.png`
+- USDC on Ethereum: `assets/tokens/eip155-1/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.png`
+- USDC on Solana: `assets/tokens/solana-mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v.png`
 
-## 🛠️ For Developers (Integration)
+## Image Rules (Required)
 
-Do you want to display MemeCore token logos in your wallet or dApp? 
-Do not fetch from GitHub raw URLs directly. Use **jsDelivr CDN** via MeCo for the best performance.
+- PNG only
+- Exactly `256x256`
+- Max file size: `200KB`
 
-### Base URL
-```
-https://cdn.jsdelivr.net/gh/MemeCore-Org/meco-assets@main/blockchains/memecore/assets/
-```
+## When It Shows In Wallet
 
-### Example Usage
+After MeCo Wallet approves and merges your PR to `main`:
 
-**1. Get Token Logo:**
-```
-https://cdn.jsdelivr.net/gh/MemeCore-Org/meco-assets@main/blockchains/memecore/assets/{CHECKSUM_ADDRESS}/logo.png
-```
+1. CI validation passes
+2. jsDelivr cache refresh runs for changed files
+3. The icon is available from the CDN URL and used by MeCo Wallet
 
-**2. Get Token Info:**
-```
-https://cdn.jsdelivr.net/gh/MemeCore-Org/meco-assets@main/blockchains/memecore/assets/{CHECKSUM_ADDRESS}/info.json
-```
+## Quick Check After Merge
 
----
+- Open the expected CDN URL and confirm HTTP 200
+- Native token URL template:
+  `https://cdn.jsdelivr.net/gh/MeCoWallet/meco-assets@main/assets/tokens/native/{chainRef}.png`
+- Non-native token URL template:
+  `https://cdn.jsdelivr.net/gh/MeCoWallet/meco-assets@main/assets/tokens/{chainRef}/{tokenId}.png`
+- If wallet cache is stale, retry after short cache propagation time
 
-## 🛡️ Disclaimer
+## Disclaimer
 
-- **No Verification:** Listing in MeCo Assets does not imply endorsement by the MeCo or MemeCore team. 
-- **Safety:** Users must do their own research (DYOR). We filter out obvious impersonation scams (e.g., fake USDT), but we do not audit token contracts.
-- **Removal:** MeCo reserves the right to remove any asset that violates our policies (NSFW, scams, etc.).
+- No Verification: Listing in this repository does not imply endorsement by the MeCo Wallet or MemeCore team.
+- Safety: Users must do their own research (DYOR). This repository does not audit token contracts.
+- Removal: MeCo Wallet may remove assets that violate policy.
 
-## 📄 License
+## License
 
-This repository is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
+This repository is licensed under the MIT License. See `LICENSE`.

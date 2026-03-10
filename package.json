@@ -4,9 +4,7 @@
   "private": true,
   "description": "MemeCore Asset Repository",
   "scripts": {
-    "build": "echo 'No build step required for assets'",
-    "test": "python3 .github/scripts/validate.py", 
-    "changeset": "changeset"
+    "test": "python3 .github/scripts/validate.py"
   },
   "keywords": [],
   "author": "",

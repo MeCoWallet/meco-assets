@@ -3,7 +3,10 @@ name: Asset Validator
 on:
   pull_request:
     paths:
-      - 'blockchains/**/assets/**'
+      - 'assets/**'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
 
 jobs:
   validate:
@@ -24,9 +27,7 @@ jobs:
         id: changed-files
         uses: tj-actions/changed-files@v35
         with:
-          files: 'blockchains/**/assets/**'
+          files: 'assets/**'
 
       - name: Run Validation Script
-        env:
-          ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
-        run: python .github/scripts/validate.py
+        run: python .github/scripts/validate.py --files "${{ steps.changed-files.outputs.all_changed_files }}"
