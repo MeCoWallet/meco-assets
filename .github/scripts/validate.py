@@ -1,128 +1,172 @@
+import argparse
 import os
+import re
 import sys
-import json
+from pathlib import Path
+
 from PIL import Image
-from eth_utils import to_checksum_address, is_address
 
-MAX_FILE_SIZE_KB = 1024  # 1MB
-MAX_DIMENSION = 512      # 512px
-REQUIRED_FIELDS = ["name", "type", "symbol", "decimals", "description", "website", "explorer", "id", "status"]
-
-# Scam-proof whitelist
-OFFICIAL_CONTRACTS = {
-    # "memecore": {
-    #     "USDT": "0x...",
-    # },
+MAX_FILE_SIZE_BYTES = 200 * 1024
+EXPECTED_SIZE = (256, 256)
+CHAIN_REF_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)+$")
+TOKEN_ID_GENERIC_RE = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
+TOKEN_ID_RULES: dict[str, re.Pattern[str]] = {
+    "eip155": re.compile(r"^0x[a-f0-9]{40}$"),
+    "solana": re.compile(r"^[1-9A-HJ-NP-Za-km-z]{32,44}$"),
+    "aptos": re.compile(r"^0x[a-f0-9]{1,64}$"),
+    "sui": re.compile(r"^0x[a-f0-9]{1,64}$"),
+    "tron": re.compile(r"^T[1-9A-HJ-NP-Za-km-z]{33}$"),
 }
 
-def fail(message):
+
+def fail(message: str) -> None:
     print(f"❌ {message}")
     sys.exit(1)
 
-def validate_token_folder(base_path, chain_name, token_address):
-    # [Fix] Define folder_path correctly at the beginning
-    folder_path = os.path.join(base_path, token_address)
-    
-    print(f"🔍 Checking [{chain_name}] token folder: {token_address}...")
 
-    # 1. Check address and checksum
-    if not is_address(token_address):
-        fail(f"Invalid Folder Name: '{token_address}' is not a valid EVM address.")
-    
-    expected_checksum = to_checksum_address(token_address)
-    if token_address != expected_checksum:
-        fail(f"Checksum Error! Folder name must be mixed-case.\n   Current: {token_address}\n   Correct: {expected_checksum}")
+def is_chain_ref(value: str) -> bool:
+    return bool(CHAIN_REF_RE.fullmatch(value))
 
-    # 2. check file existance
-    logo_path = os.path.join(folder_path, "logo.png")
-    info_path = os.path.join(folder_path, "info.json")
 
-    if not os.path.exists(logo_path): fail(f"Missing file: 'logo.png' is required in {token_address}")
-    if not os.path.exists(info_path): fail(f"Missing file: 'info.json' is required in {token_address}")
+def namespace_from_chain_ref(chain_ref: str) -> str:
+    return chain_ref.split("-", maxsplit=1)[0]
 
-    # 3. check image
-    if any(f.lower() == "logo.png" and f != "logo.png" for f in os.listdir(folder_path)):
-        fail("Filename Error: Must be lowercase 'logo.png', not 'Logo.png'.")
+
+def validate_token_id(chain_ref: str, token_id: str, path: str) -> None:
+    namespace = namespace_from_chain_ref(chain_ref)
+    rule = TOKEN_ID_RULES.get(namespace, TOKEN_ID_GENERIC_RE)
+    if not rule.fullmatch(token_id):
+        if namespace == "eip155":
+            fail(f"Invalid eip155 token ID. Expected lowercase EVM address: {path}")
+        if namespace == "solana":
+            fail(f"Invalid solana token ID. Expected base58 mint address: {path}")
+        if namespace in {"aptos", "sui"}:
+            fail(f"Invalid {namespace} token ID. Expected lowercase hex with 0x prefix: {path}")
+        if namespace == "tron":
+            fail(f"Invalid tron token ID. Expected base58 account format: {path}")
+        fail(f"Invalid token ID for chain '{chain_ref}': {path}")
+
+
+def validate_png(path: Path) -> None:
+    if path.suffix != ".png":
+        fail(f"Only PNG files are allowed: {path.as_posix()}")
+
+    file_size = path.stat().st_size
+    if file_size > MAX_FILE_SIZE_BYTES:
+        fail(
+            f"File too large ({file_size} bytes): {path.as_posix()} "
+            f"(max {MAX_FILE_SIZE_BYTES} bytes)"
+        )
 
     try:
-        with Image.open(logo_path) as img:
+        with Image.open(path) as img:
             if img.format != "PNG":
-                fail("Image Format Error: Must be PNG.")
-            
-            w, h = img.size
-            if w > MAX_DIMENSION or h > MAX_DIMENSION:
-                fail(f"Image Size Error: Too big ({w}x{h}). Max allowed is {MAX_DIMENSION}x{MAX_DIMENSION}.")
-            
-            if w != h:
-                fail(f"Image Ratio Error: Must be square (1:1). Current: {w}x{h}.")
+                fail(f"Image is not PNG: {path.as_posix()}")
 
-        file_size_kb = os.path.getsize(logo_path) / 1024
-        if file_size_kb > MAX_FILE_SIZE_KB:
-            fail(f"File Size Error: Too large ({file_size_kb:.2f}KB). Max allowed is {MAX_FILE_SIZE_KB}KB.")
+            if img.size != EXPECTED_SIZE:
+                fail(
+                    f"Invalid image size {img.size} for {path.as_posix()}. "
+                    f"Expected {EXPECTED_SIZE}."
+                )
 
-    except Exception as e:
-        fail(f"Image Validation Failed: {str(e)}")
+            if img.width != img.height:
+                fail(f"Image must be square: {path.as_posix()}")
 
-    # 4. check info.json
-    if any(f.lower() == "info.json" and f != "info.json" for f in os.listdir(folder_path)):
-        fail("Filename Error: Must be lowercase 'info.json'.")
+    except OSError as error:
+        fail(f"Cannot open image {path.as_posix()}: {error}")
 
-    try:
-        with open(info_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        
-        # check field
-        missing = [field for field in REQUIRED_FIELDS if field not in data]
-        if missing:
-            fail(f"JSON Error: Missing required fields in info.json: {', '.join(missing)}")
-        
-        # check ID and file
-        if data.get('id') != token_address:
-            fail(f"JSON Error: 'id' field ({data.get('id')}) must match folder name ({token_address}).")
 
-        # check scam-proof
-        chain_key = chain_name.lower()
-        if chain_key in OFFICIAL_CONTRACTS:
-            symbol = data.get('symbol', '').upper()
-            scam_list = OFFICIAL_CONTRACTS[chain_key]
-            
-            if symbol in scam_list:
-                if data['id'] != scam_list[symbol]:
-                    fail(f"⚠️ SCAM ALERT: The symbol '{symbol}' is reserved. You cannot list a fake version.")
+def validate_path(path: Path) -> None:
+    rel = path.as_posix()
+    parts = rel.split("/")
 
-    except json.JSONDecodeError:
-        fail("JSON Error: info.json is not a valid JSON file.")
-    except Exception as e:
-        fail(f"Info Validation Failed: {str(e)}")
+    if parts[0] != "assets":
+        fail(f"Invalid root path (must start with assets/): {rel}")
 
-    print(f"✅ [{chain_name}] Token {token_address} passed validation!")
+    if len(parts) >= 2 and parts[1].startswith("."):
+        return
 
-# --- main ---
+    if len(parts) == 3 and parts[1] == "networks":
+        filename = parts[2]
+        if not filename.endswith(".png"):
+            fail(f"Network icon must be PNG: {rel}")
+        chain_ref = filename[:-4]
+        if not is_chain_ref(chain_ref):
+            fail(f"Invalid network chain reference filename: {rel}")
+        validate_png(path)
+        return
+
+    if len(parts) == 4 and parts[1] == "tokens" and parts[2] == "native":
+        filename = parts[3]
+        if not filename.endswith(".png"):
+            fail(f"Native token icon must be PNG: {rel}")
+        chain_ref = filename[:-4]
+        if not is_chain_ref(chain_ref):
+            fail(f"Invalid native token chain reference filename: {rel}")
+        validate_png(path)
+        return
+
+    if len(parts) == 4 and parts[1] == "tokens":
+        chain_ref = parts[2]
+        filename = parts[3]
+        if not is_chain_ref(chain_ref):
+            fail(f"Invalid token chain reference directory: {rel}")
+        if not filename.endswith(".png"):
+            fail(f"Token icon must be PNG: {rel}")
+        token_id = filename[:-4]
+        validate_token_id(chain_ref, token_id, rel)
+        validate_png(path)
+        return
+
+    if len(parts) == 3 and parts[1] == "fallback" and parts[2] == "default-token.png":
+        validate_png(path)
+        return
+
+    if path.name.startswith("."):
+        return
+
+    fail(f"Invalid asset path structure: {rel}")
+
+
+def collect_paths(args: argparse.Namespace) -> list[Path]:
+    if args.files:
+        raw_paths = args.files.split()
+        unique = sorted(set(raw_paths))
+        return [Path(p) for p in unique if p.startswith("assets/") and Path(p).exists()]
+
+    assets_root = Path("assets")
+    if not assets_root.exists():
+        return []
+
+    collected: list[Path] = []
+    for path in assets_root.rglob("*"):
+        if not path.is_file():
+            continue
+        if path.name.startswith("."):
+            continue
+        collected.append(path)
+    return sorted(collected)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Validate wallet asset repository files.")
+    parser.add_argument(
+        "--files",
+        default="",
+        help="Space-separated changed file paths. If omitted, validates all files under assets/.",
+    )
+    args = parser.parse_args()
+
+    paths = collect_paths(args)
+    if not paths:
+        print("No asset files to validate.")
+        return
+
+    for path in paths:
+        validate_path(path)
+
+    print(f"✅ Validation passed for {len(paths)} asset file(s).")
+
+
 if __name__ == "__main__":
-    changed_files = os.environ.get("ALL_CHANGED_FILES", "")
-    checked_folders = set()
-
-    for file_path in changed_files.split():
-        parts = file_path.split('/')
-        
-        # check path: blockchains/[chain_name]/assets/[contents]
-        if len(parts) >= 4 and parts[0] == "blockchains" and parts[2] == "assets":
-            chain_name = parts[1]       # e.g. memecore
-            item_name = parts[3]        # e.g. 0x123... folder or files
-            
-            base_path = os.path.join(parts[0], parts[1], parts[2])
-            full_path = os.path.join(base_path, item_name)
-            
-            # strict mode
-            if os.path.isfile(full_path):
-                fail(f"❌ Strict Mode Error: Invalid file location '{item_name}'.\n   Files are NOT allowed directly in 'assets/'.\n   You must create a token folder (e.g. assets/0x123.../logo.png).")
-
-            unique_key = f"{chain_name}/{item_name}"
-            
-            if unique_key not in checked_folders:
-                if os.path.isdir(full_path):
-                    validate_token_folder(base_path, chain_name, item_name)
-                    checked_folders.add(unique_key)
-
-    if not checked_folders:
-        print("No valid asset folders modified (Ignored non-asset files).")
+    main()

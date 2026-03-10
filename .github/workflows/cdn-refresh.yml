@@ -1,0 +1,31 @@
+name: jsDelivr Cache Refresh
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'assets/**'
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Purge changed jsDelivr paths
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_BEFORE: ${{ github.event.before }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          CHANGED_FILES=$(git diff --name-only --diff-filter=AMR "$GITHUB_BEFORE" "$GITHUB_SHA" -- 'assets/**' | tr '\n' ' ')
+          python .github/scripts/purge_jsdelivr.py --files "$CHANGED_FILES" --repo "$GITHUB_REPOSITORY" --ref main
