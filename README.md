@@ -11,14 +11,19 @@ If your PR is approved and merged to `main`, your icon is served by jsDelivr and
 
 - Install Python 3 (official): https://www.python.org/downloads/
 - Ensure `pip` is available (official guide): https://pip.pypa.io/en/stable/installation/
+- Verify Python and pip are installed:
+  ```bash
+  python3 --version
+  pip3 --version
+  ```
 - Install Python dependencies:
   ```bash
   pip3 install -r requirements.txt
   ```
 - Prepare logo source image file (square image recommended, PNG preferred)
 - Logo does not need to be pre-cropped, but it must fit safely inside the circular display area in wallet UI.
-- Logo preparation sample:
-  <img src="docs/assets/logo-prep/sample.png" width="48" alt="Logo display sample" />
+- Wallet render preview (how your logo will appear in circular UI):
+<img src="docs/assets/guide/design.png" width="700" alt="Wallet logo render preview" />
 - Prepare required metadata before running wizard:
   - Asset type: `network` | `native` | `token`
   - `chainRef` (example: `eip155-4352`, `solana-mainnet`)
