@@ -12,9 +12,7 @@ Please complete all fields below.
 ## Checklist
 
 - [ ] I followed the `assets/` folder rules in `README.md`
-- [ ] I used one of these paths: `assets/networks/{chainRef}.png`, `assets/tokens/native/{chainRef}.png`, or `assets/tokens/{chainRef}/{tokenId}.png`
 - [ ] My file is PNG and exactly 256x256
-- [ ] My image has transparent background
 - [ ] My file size is under 200KB
-- [ ] Token ID format matches the chain namespace rules in README
+- [ ] I followed all Path Rules (including chain/network naming and token ID rules): https://github.com/MeCoWallet/meco-assets?tab=readme-ov-file#path-rules
 - [ ] I understand only approved PRs merged to `main` become official CDN assets
